@@ -5,6 +5,7 @@ var cookie_reader = require('cookie');
 var querystring = require('querystring');
 
 var redis = require('socket.io/node_modules/redis');
+console.log('socket')
 var sub = redis.createClient();
 
 //Subscribe to the Redis chat channel
@@ -23,19 +24,26 @@ io.configure(function(){
 });
 
 io.sockets.on('connection', function (socket) {
-    
+
     //Grab message from Redis and send to client
+    console.log('A socket with sessionID ' + socket.handshake.sessionid + ' connected!');
     sub.on('message', function(channel, message){
+        console.log('message ', message);
         socket.send(message);
     });
-    
+    socket.on('adduser', function (data) {
+        socket.broadcast.emit('adduser', {
+            name: data.name
+        });
+    });
+    socket.emit('joindone');
     //Client is sending message through socket.io
     socket.on('send_message', function (message) {
         values = querystring.stringify({
             comment: message,
             sessionid: socket.handshake.cookie['sessionid'],
         });
-        
+
         var options = {
             host: 'localhost',
             port: 3000,
@@ -46,11 +54,11 @@ io.sockets.on('connection', function (socket) {
                 'Content-Length': values.length
             }
         };
-        
+
         //Send message to Django server
         var req = http.request(options, function(res){
             res.setEncoding('utf8');
-            
+
             //Print out error message
             res.on('data', function(message){
                 if(message != 'Everything worked :)'){
@@ -58,7 +66,7 @@ io.sockets.on('connection', function (socket) {
                 }
             });
         });
-        
+
         req.write(values);
         req.end();
     });

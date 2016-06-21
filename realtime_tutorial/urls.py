@@ -1,6 +1,8 @@
 from django.conf.urls import patterns, include, url
+from django.contrib import admin
 
 urlpatterns = patterns('',
+    url(r'^admin/', admin.site.urls),
     url(r'^$', 'core.views.home', name='home'),
     url(r'^node_api$', 'core.views.node_api', name='node_api'),
     url(r'^login/$', 'django.contrib.auth.views.login', {'template_name': 'admin/login.html'}, name='login'),

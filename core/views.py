@@ -11,7 +11,9 @@ import redis
 @login_required
 def home(request):
     comments = Comments.objects.select_related().all()[0:100]
-    return render(request, 'index.html', locals())
+    name = request.user.username
+    # import pdb; pdb.set_trace()
+    return render(request, 'index.html', locals(), )
 
 @csrf_exempt
 def node_api(request):
@@ -23,11 +25,12 @@ def node_api(request):
 
         #Create comment
         Comments.objects.create(user=user, text=request.POST.get('comment'))
-        
+
         #Once comment has been created post it to the chat channel
         r = redis.StrictRedis(host='localhost', port=6379, db=0)
+        #broadcast message to all user online after save to db
         r.publish('chat', user.username + ': ' + request.POST.get('comment'))
-        
+
         return HttpResponse("Everything worked :)")
-    except Exception, e:
+    except Exception as e:
         return HttpResponseServerError(str(e))
